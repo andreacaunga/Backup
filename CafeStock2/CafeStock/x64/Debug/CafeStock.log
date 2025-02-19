@@ -1,0 +1,6 @@
+﻿  Dashboard.cpp
+  Dashboard.obj : MSIL module encountered; incremental linking is disabled for MSIL; performing full link
+MainLogin.obj : warning LNK4248: unresolved typeref token (0100002C) for 'pg_conn'; image may not run
+DatabaseHandler.obj : warning LNK4248: unresolved typeref token (01000018) for 'pg_conn'; image may not run
+DatabaseHandler.obj : warning LNK4248: unresolved typeref token (01000027) for 'pg_result'; image may not run
+  CafeStock.vcxproj -> C:\Users\user\source\repos\CafeStock2\x64\Debug\CafeStock.exe

@@ -1,0 +1,9 @@
+C:\Users\user\source\repos\CafeStock2\CafeStock\x64\Debug\CafeStock.vcxproj.AssemblyReference.cache
+C:\Users\user\source\repos\CafeStock2\CafeStock\x64\Debug\CafeStock.Dashboard.resources
+C:\Users\user\source\repos\CafeStock2\CafeStock\x64\Debug\CafeStock.HistoryControll.resources
+C:\Users\user\source\repos\CafeStock2\CafeStock\x64\Debug\CafeStock.InventoryMenu.resources
+C:\Users\user\source\repos\CafeStock2\CafeStock\x64\Debug\CafeStock.MainLogin.resources
+C:\Users\user\source\repos\CafeStock2\CafeStock\x64\Debug\CafeStock.Menumain.resources
+C:\Users\user\source\repos\CafeStock2\CafeStock\x64\Debug\CafeStock.PopupEdit.resources
+C:\Users\user\source\repos\CafeStock2\CafeStock\x64\Debug\CafeStock.Register.resources
+C:\Users\user\source\repos\CafeStock2\CafeStock\x64\Debug\CafeStock.vcxproj.GenerateResource.cache

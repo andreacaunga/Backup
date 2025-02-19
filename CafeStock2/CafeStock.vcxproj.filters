@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Dashboard.cpp" />
+    <ClCompile Include="HistoryControll.cpp" />
+    <ClCompile Include="InventoryMenu.cpp" />
+    <ClCompile Include="MainLogin.cpp" />
+    <ClCompile Include="Menumain.cpp" />
+    <ClCompile Include="PopupEdit.cpp" />
+    <ClCompile Include="Register.cpp" />
+    <ClCompile Include="DatabaseHandler.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Dashboard.h" />
+    <ClInclude Include="HistoryControll.h" />
+    <ClInclude Include="InventoryMenu.h" />
+    <ClInclude Include="MainLogin.h" />
+    <ClInclude Include="Menumain.h" />
+    <ClInclude Include="PopupEdit.h" />
+    <ClInclude Include="Register.h" />
+    <ClInclude Include="DatabaseHandler.h" />
+  </ItemGroup>
+</Project>
