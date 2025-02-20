@@ -33,20 +33,17 @@ System::Void CafeStock::MainLogin::bttnLogin_Click(System::Object^ sender, Syste
         return;
     }
 
-    // Create database handler
-    DatabaseHandler^ db = gcnew DatabaseHandler();
+    // Create database handler with Supabase URL and API key
+    String^ supabaseUrl = "https://cefsumddrfcatzaswddb.supabase.co/rest/v1";
+    String^ apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNlZnN1bWRkcmZjYXR6YXN3ZGRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk5MzQzNDQsImV4cCI6MjA1NTUxMDM0NH0.x0cSDoOt7VWnqwubHYLc9AeeOD3miWYalLB64Va25ls";
+    DatabaseHandler^ db = gcnew DatabaseHandler(supabaseUrl, apiKey);
 
-    if (!db->connect()) {
-        MessageBox::Show("Database connection failed. Check your Supabase credentials.",
-            "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
-        return;
-    }
+    // Construct query URL using Supabase filters
+    String^ tableName = "users";
+    String^ url = tableName + "?username=eq." + username + "&password=eq." + password;
 
-    // Parameterized Query
-    System::String^ query = "SELECT COUNT(*) FROM public.users WHERE username = @username AND password = @password;";
-
-    // Execute Query
-    DataTable^ result = db->executeQuery(query, username, password);
+    // Execute GET request
+    DataTable^ result = db->getData(url);
 
     if (result == nullptr) {
         MessageBox::Show("Database query execution failed.", "Database Error",
@@ -56,26 +53,20 @@ System::Void CafeStock::MainLogin::bttnLogin_Click(System::Object^ sender, Syste
 
     // Check Query Result
     if (result != nullptr && result->Rows->Count > 0) {
-        int userCount = System::Convert::ToInt32(result->Rows[0]->ItemArray[0]);  // ✅ Correct way to get COUNT(*)
+        MessageBox::Show("Login successful!", "Success", MessageBoxButtons::OK, MessageBoxIcon::Information);
 
-        if (userCount > 0) {
-            MessageBox::Show("Login successful!", "Success", MessageBoxButtons::OK, MessageBoxIcon::Information);
-    
-            // Hide current form and show main menu
-            this->Hide();
-            Menumain^ newForm = gcnew Menumain();
-            newForm->ShowDialog();
-            this->Close();
-        }
-        else {
-            MessageBox::Show("Invalid username or password.", "Login Failed",
-                MessageBoxButtons::OK, MessageBoxIcon::Error);
-        }
+        // Hide current form and show main menu
+        this->Hide();
+        Menumain^ newForm = gcnew Menumain();
+        newForm->ShowDialog();
+        this->Close();
     }
     else {
-        MessageBox::Show("User not found.", "Login Failed", MessageBoxButtons::OK, MessageBoxIcon::Error);
+        MessageBox::Show("Invalid username or password.", "Login Failed",
+            MessageBoxButtons::OK, MessageBoxIcon::Error);
     }
 }
+
 
 System::Void CafeStock::MainLogin::label7_Click(System::Object^ sender, System::EventArgs^ e) {
     this->Hide();

@@ -1,32 +1,21 @@
 #pragma once
-#include <iostream>
-#include <libpq-fe.h>
-#include <vector>
-#include <string>
-#include <msclr/marshal_cppstd.h>
-
-#undef DataObject
-#undef IServiceProvider
-
-
 using namespace System;
 using namespace System::Data;
+using namespace System::Net::Http;
+using namespace System::Text;
 using namespace System::Windows::Forms;
-
 
 public ref class DatabaseHandler {
 private:
-    PGconn* conn;
+    String^ baseUrl;
+    String^ apiKey;
+    HttpClient^ client;
 
 public:
-    DatabaseHandler();
+    DatabaseHandler(String^ url, String^ key);
     ~DatabaseHandler();
-    bool connect();
     DataTable^ getData(String^ tableName);
-
-public:
-    DataTable^ executeQuery(System::String^ query, System::String^ username, System::String^ password);
-
+    bool insertData(String^ tableName, String^ jsonData);
+    bool updateData(String^ tableName, String^ jsonData, String^ id);
+    bool deleteData(String^ tableName, String^ id);
 };
-
-

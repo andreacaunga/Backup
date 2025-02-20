@@ -1,136 +1,87 @@
 #include "DatabaseHandler.h"
-#include <msclr/marshal_cppstd.h>
-#include <libpq-fe.h>  // Added PostgreSQL Header
-#include <iostream>
 
-using namespace System;
-
-DatabaseHandler::DatabaseHandler() {
-    conn = nullptr;
+DatabaseHandler::DatabaseHandler(String^ url, String^ key) {
+    baseUrl = url;
+    apiKey = key;
+    client = gcnew HttpClient();
+    client->DefaultRequestHeaders->Add("apikey", apiKey);
+    client->DefaultRequestHeaders->Add("Authorization", "Bearer " + apiKey);
 }
 
 DatabaseHandler::~DatabaseHandler() {
-    if (conn) {
-        PQfinish(conn);
-    }
+    delete client;
 }
 
-bool DatabaseHandler::connect() {
-    // Replace with your Supabase Connection String
-    //const char* conninfo = "postgresql://postgres:Cafe-A261.1@db.cefsumddrfcatzaswddb.supabase.co:5432/postgres?sslmode=verify-ca&sslrootcert=ca-certificate.crt";
-    const char* conninfo = "postgresql://postgres.cefsumddrfcatzaswddb:Cafe-A261.1@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres";
-
-
-    // Connect to PostgreSQL
-    conn = PQconnectdb(conninfo);
-
-    // Check if Connection is Successful
-    if (PQstatus(conn) != CONNECTION_OK) {
-        std::cerr << "Connection to database failed: " << PQerrorMessage(conn) << std::endl;
-        MessageBox::Show("Failed to connect to Supabase.\n" + gcnew String(PQerrorMessage(conn)),
-            "Database Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
-        PQfinish(conn);
-        return false;
-    }
-
-    //MessageBox::Show("Connected to Supabase PostgreSQL successfully!", "Success", MessageBoxButtons::OK, MessageBoxIcon::Information);
-    return true;
-}
-
+// ---------------------- GET Data ----------------------
 DataTable^ DatabaseHandler::getData(String^ tableName) {
-    if (!conn || PQstatus(conn) != CONNECTION_OK) return nullptr;
+    try {
+        Uri^ uri = gcnew Uri(baseUrl + "/" + tableName);
+        HttpResponseMessage^ response = client->GetAsync(uri)->Result;
 
-    // Convert System::String^ to std::string
-    std::string tableNameStr = msclr::interop::marshal_as<std::string>(tableName);
-    std::string query = "SELECT * FROM \"" + tableNameStr + "\" LIMIT 5;";
-
-    // Execute Query
-    PGresult* res = PQexec(conn, query.c_str());
-
-    // Check Query Status
-    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        std::cerr << "Query failed: " << PQerrorMessage(conn) << std::endl;
-        MessageBox::Show("Failed to fetch data.\n" + gcnew String(PQerrorMessage(conn)),
-            "Database Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
-        PQclear(res);
-        return nullptr;
-    }
-
-    // Store Results in DataTable
-    DataTable^ dt = gcnew DataTable();
-    int columns = PQnfields(res);
-    int rows = PQntuples(res);
-
-    for (int i = 0; i < columns; i++) {
-        dt->Columns->Add(gcnew String(PQfname(res, i)));
-    }
-
-    for (int i = 0; i < rows; i++) {
-        DataRow^ row = dt->NewRow();
-        for (int j = 0; j < columns; j++) {
-            row[j] = gcnew String(PQgetvalue(res, i, j));
+        if (!response->IsSuccessStatusCode) {
+            MessageBox::Show("Failed to fetch data: " + response->ReasonPhrase, "Database Error",
+                MessageBoxButtons::OK, MessageBoxIcon::Error);
+            return nullptr;
         }
-        dt->Rows->Add(row);
-    }
 
-    PQclear(res);
-    return dt;
-}
-
-DataTable^ DatabaseHandler::executeQuery(String^ query, String^ username, String^ password) {
-    if (!conn || PQstatus(conn) != CONNECTION_OK) return nullptr;
-
-    // Convert System::String^ to std::string
-    std::string queryStr = msclr::interop::marshal_as<std::string>(query);
-    std::string usernameStr = msclr::interop::marshal_as<std::string>(username);
-    std::string passwordStr = msclr::interop::marshal_as<std::string>(password);
-
-    // Replace Placeholders
-    size_t pos = queryStr.find("@username");
-    if (pos != std::string::npos) queryStr.replace(pos, 9, "'" + usernameStr + "'");
-
-    pos = queryStr.find("@password");
-    if (pos != std::string::npos) queryStr.replace(pos, 9, "'" + passwordStr + "'");
-
-    // Execute Query
-    PGresult* res = PQexec(conn, queryStr.c_str());
-
-    // Check Query Status
-    ExecStatusType status = PQresultStatus(res);
-
-    if (status == PGRES_TUPLES_OK) {
-        // This is a SELECT query, return results in DataTable
+        String^ jsonResponse = response->Content->ReadAsStringAsync()->Result;
         DataTable^ dt = gcnew DataTable();
-        int columns = PQnfields(res);
-        int rows = PQntuples(res);
+        dt->Columns->Add("Response");
+        DataRow^ row = dt->NewRow();
+        row["Response"] = jsonResponse;
+        dt->Rows->Add(row);
 
-        for (int i = 0; i < columns; i++) {
-            dt->Columns->Add(gcnew String(PQfname(res, i)));
-        }
-
-        for (int i = 0; i < rows; i++) {
-            DataRow^ row = dt->NewRow();
-            for (int j = 0; j < columns; j++) {
-                row[j] = gcnew String(PQgetvalue(res, i, j));
-            }
-            dt->Rows->Add(row);
-        }
-
-        PQclear(res);
         return dt;
     }
-    else if (status == PGRES_COMMAND_OK) {
-        // This is an INSERT/UPDATE/DELETE query, return nullptr
-        PQclear(res);
-        return nullptr;
-    }
-    else {
-        // Query failed
-        std::cerr << "Query failed: " << PQerrorMessage(conn) << std::endl;
-        MessageBox::Show("Query execution failed.\n" + gcnew String(PQerrorMessage(conn)),
-            "Database Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
-        PQclear(res);
+    catch (Exception^ ex) {
+        MessageBox::Show("Error: " + ex->Message, "Database Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
         return nullptr;
     }
 }
 
+// ---------------------- INSERT Data ----------------------
+bool DatabaseHandler::insertData(String^ tableName, String^ jsonData) {
+    try {
+        Uri^ uri = gcnew Uri(baseUrl + "/" + tableName);
+        HttpContent^ content = gcnew StringContent(jsonData, Encoding::UTF8, "application/json");
+        HttpResponseMessage^ response = client->PostAsync(uri, content)->Result;
+
+        return response->IsSuccessStatusCode;
+    }
+    catch (Exception^ ex) {
+        MessageBox::Show("Error: " + ex->Message, "Database Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+        return false;
+    }
+}
+
+// ---------------------- UPDATE Data ----------------------
+bool DatabaseHandler::updateData(String^ tableName, String^ jsonData, String^ id) {
+    try {
+        Uri^ uri = gcnew Uri(baseUrl + "/" + tableName + "?id=eq." + id);
+        HttpContent^ content = gcnew StringContent(jsonData, Encoding::UTF8, "application/json");
+        HttpRequestMessage^ request = gcnew HttpRequestMessage(gcnew HttpMethod("PATCH"), uri);
+
+        request->Content = content;
+        HttpResponseMessage^ response = client->SendAsync(request)->Result;
+
+        return response->IsSuccessStatusCode;
+    }
+    catch (Exception^ ex) {
+        MessageBox::Show("Error: " + ex->Message, "Database Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+        return false;
+    }
+}
+
+// ---------------------- DELETE Data ----------------------
+bool DatabaseHandler::deleteData(String^ tableName, String^ id) {
+    try {
+        Uri^ uri = gcnew Uri(baseUrl + "/" + tableName + "?id=eq." + id);
+        HttpResponseMessage^ response = client->DeleteAsync(uri)->Result;
+
+        return response->IsSuccessStatusCode;
+    }
+    catch (Exception^ ex) {
+        MessageBox::Show("Error: " + ex->Message, "Database Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+        return false;
+    }
+}
